@@ -9,16 +9,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-// RequestCfgFunc visitor to configure request
+// RequestOptionFunc visitor to configure request
 // Usage example:
 //
-// func WithAuthToken(token string) RequestCfgFunc {
+// func WithAuthToken(token string) RequestOptionFunc {
 // 	return func(req *http.Request) (*http.Request, error) {
 // 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 // 		return req, nil
 //   }
 // }
-type RequestCfgFunc func(*http.Request) (*http.Request, error)
+type RequestOptionFunc func(*http.Request) (*http.Request, error)
 
 // WithContext binds context to request.
 // The function is included mostly for example purposes.
@@ -26,7 +26,7 @@ type RequestCfgFunc func(*http.Request) (*http.Request, error)
 //
 // req, err := api.NewRequest("GET", "/orders", nil, api.WithHostURL("https://example.com"))
 //
-func WithContext(ctx context.Context) RequestCfgFunc {
+func WithContext(ctx context.Context) RequestOptionFunc {
 	return func(req *http.Request) (*http.Request, error) {
 		return req.WithContext(ctx), nil
 	}
@@ -39,7 +39,7 @@ func WithContext(ctx context.Context) RequestCfgFunc {
 // NewRequest := api.NewRequestFactory(api.WithBaseURL("https://example.com"))
 // ...
 // req, err = NewRequest("GET", "/orders", nil)
-func WithBaseURL(hostURL string) RequestCfgFunc {
+func WithBaseURL(hostURL string) RequestOptionFunc {
 	return func(req *http.Request) (*http.Request, error) {
 		u, err := url.Parse(hostURL)
 		if err != nil {
@@ -53,7 +53,7 @@ func WithBaseURL(hostURL string) RequestCfgFunc {
 }
 
 // NewRequest creates HTTP preconfigured with resinio params
-func NewRequest(method string, url string, body io.Reader, cfgs ...RequestCfgFunc) (*http.Request, error) {
+func NewRequest(method string, url string, body io.Reader, cfgs ...RequestOptionFunc) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create request")
@@ -69,7 +69,7 @@ func NewRequest(method string, url string, body io.Reader, cfgs ...RequestCfgFun
 }
 
 // NewRequestFunc new request signature
-type NewRequestFunc func(method string, url string, body io.Reader, cfgs ...RequestCfgFunc) (*http.Request, error)
+type NewRequestFunc func(method string, url string, body io.Reader, cfgs ...RequestOptionFunc) (*http.Request, error)
 
 // NewRequestFactory is factory function to capture some high level base params
 // Usage example:
@@ -79,8 +79,8 @@ type NewRequestFunc func(method string, url string, body io.Reader, cfgs ...Requ
 //		WithAuthToken(token),
 //  )
 // req, err := NewRequest("GET", "/orders", nil)
-func NewRequestFactory(baseCfgs ...RequestCfgFunc) NewRequestFunc {
-	return func(method string, url string, body io.Reader, cfgs ...RequestCfgFunc) (*http.Request, error) {
+func NewRequestFactory(baseCfgs ...RequestOptionFunc) NewRequestFunc {
+	return func(method string, url string, body io.Reader, cfgs ...RequestOptionFunc) (*http.Request, error) {
 		return NewRequest(method, url, body, append(baseCfgs, cfgs...)...)
 	}
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // sample config function
-func WithAuthToken(token string) RequestCfgFunc {
+func WithAuthToken(token string) RequestOptionFunc {
 	return func(req *http.Request) (*http.Request, error) {
 		req.Header.Set("Authorization", "Bearer "+token)
 		return req, nil
@@ -20,14 +20,14 @@ func WithAuthToken(token string) RequestCfgFunc {
 }
 
 // request config to trigger failure
-func WithFailure(err error) RequestCfgFunc {
+func WithFailure(err error) RequestOptionFunc {
 	return func(*http.Request) (*http.Request, error) {
 		return nil, err
 	}
 }
 
 // to capture if config has been called
-func WithCallCount(called *bool) RequestCfgFunc {
+func WithCallCount(called *bool) RequestOptionFunc {
 	*called = false
 	return func(req *http.Request) (*http.Request, error) {
 		*called = true

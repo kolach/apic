@@ -57,32 +57,32 @@ func (c *Client) Do(req *http.Request, interceptors ...InterceptDoFunc) (*http.R
 	return do(req)
 }
 
-// CtxClientCfgFunc is functional type to configure client
-type CtxClientCfgFunc func(c *Client)
+// ClientOptionFunc is functional type to configure client
+type ClientOptionFunc func(c *Client)
 
 // WithHTTPClient sets http cloent to make requests
-func WithHTTPClient(client *http.Client) CtxClientCfgFunc {
+func WithHTTPClient(client *http.Client) ClientOptionFunc {
 	return func(c *Client) {
 		c.client = client
 	}
 }
 
 // WithBackOff configures backoff factory
-func WithBackOff(b NewBackOffFunc) CtxClientCfgFunc {
+func WithBackOff(b NewBackOffFunc) ClientOptionFunc {
 	return func(c *Client) {
 		c.newBackOff = b
 	}
 }
 
 // WithExponentialBackOff configures backoff factory
-func WithExponentialBackOff() CtxClientCfgFunc {
+func WithExponentialBackOff() ClientOptionFunc {
 	return WithBackOff(func() backoff.BackOff {
 		return backoff.NewExponentialBackOff()
 	})
 }
 
 // WithConstantBackOff configures backoff factory
-func WithConstantBackOff(d time.Duration) CtxClientCfgFunc {
+func WithConstantBackOff(d time.Duration) ClientOptionFunc {
 	return WithBackOff(func() backoff.BackOff {
 		return backoff.NewConstantBackOff(d)
 	})
@@ -90,7 +90,7 @@ func WithConstantBackOff(d time.Duration) CtxClientCfgFunc {
 
 // WithMaxRetries configures how many retries to make
 // make sure you setup bsome backoff factory function before.
-func WithMaxRetries(n uint64) CtxClientCfgFunc {
+func WithMaxRetries(n uint64) ClientOptionFunc {
 	return func(c *Client) {
 		b := c.newBackOff
 		c.newBackOff = func() backoff.BackOff {
@@ -100,7 +100,7 @@ func WithMaxRetries(n uint64) CtxClientCfgFunc {
 }
 
 // WithNotify allows to setup external notify callback
-func WithNotify(n backoff.Notify) CtxClientCfgFunc {
+func WithNotify(n backoff.Notify) ClientOptionFunc {
 	return func(c *Client) {
 		c.notify = n
 	}
@@ -108,10 +108,10 @@ func WithNotify(n backoff.Notify) CtxClientCfgFunc {
 
 // NewClient constructs a new resin.io client
 // all HTTP requests are done via provided
-func NewClient(cfgs ...CtxClientCfgFunc) *Client {
+func NewClient(opts ...ClientOptionFunc) *Client {
 	client := &Client{client: http.DefaultClient}
-	for _, cfg := range cfgs {
-		cfg(client)
+	for _, opt := range opts {
+		opt(client)
 	}
 	return client
 }
